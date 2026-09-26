@@ -1,4 +1,4 @@
-# 🛡️ CYBERCOP // Threat Intelligence & Forensic Platform
+# 🛡️ CYBERCOP // Mail Threat Intelligence & Forensic Platform
 
 > Automated email threat monitoring, deep heuristic analysis, and digital forensics workstation designed for high-end Security Operations Centers (SOC).
 
