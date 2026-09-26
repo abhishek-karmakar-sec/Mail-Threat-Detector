@@ -1,0 +1,10 @@
+__pycache__/
+uploads/
+.venv/
+venv/
+evidence_ledger.json
+credentials.json
+.DS_Store
+flask_session/
+sessions/
+instance/

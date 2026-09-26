@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cybercop-deployment
+  labels:
+    app: cybercop
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cybercop
+  template:
+    metadata:
+      labels:
+        app: cybercop
+    spec:
+      containers:
+      - name: cybercop-flask
+        image: your-dockerhub-username/cybercop-platform:v7.0
+        ports:
+        - containerPort: 5000
+        env:
+        - name: OAUTHLIB_INSECURE_TRANSPORT
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybercop-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: cybercop
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
