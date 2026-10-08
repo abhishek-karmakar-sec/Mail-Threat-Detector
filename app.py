@@ -134,7 +134,7 @@ def authorize():
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    """Handles the OAuth callback from Google and stores user credentials"""
+    """Handles the OAuth callback from Google and exposes any token exchange errors"""
     state = session.get('state')
     secret_file = get_client_secrets_file()
     if not state or not secret_file:
@@ -161,7 +161,8 @@ def oauth2callback():
             'scopes': credentials.scopes
         }
     except Exception as e:
-        print(f"OAuth Callback Error: {e}")
+        # Exposes the exact token exchange error message instead of looping back silently
+        return f"OAuth Token Exchange Error: {str(e)}", 500
         
     return redirect(url_for('index'))
 
