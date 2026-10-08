@@ -24,8 +24,10 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Check multiple potential locations for client_secret.json on Render & Local
+# Check multiple potential locations for credentials.json on Render & Local
 POSSIBLE_SECRET_PATHS = [
+    "credentials.json",
+    "/etc/secrets/credentials.json",
     "client_secret.json",
     "/etc/secrets/client_secret.json"
 ]
@@ -108,10 +110,10 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
-    """Initiates the real Google OAuth 2.0 flow with multi-path secret checking"""
+    """Initiates the real Google OAuth 2.0 flow using credentials.json"""
     secret_file = get_client_secrets_file()
     if not secret_file:
-        return "Error: client_secret.json not found in root or Render Secret Files directory! Please configure client_secret.json in Render Environment settings.", 500
+        return "Error: credentials.json not found in root or Render Secret Files directory! Please configure credentials.json in Render Environment settings.", 500
         
     try:
         flow = Flow.from_client_secrets_file(
@@ -174,7 +176,7 @@ def download_report():
     pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], 'cybercop_forensic_report.pdf')
     generate_forensic_pdf(data, pdf_path)
 
-    with open(pdf_path, 'rb' ) as f:
+    with open(pdf_path, 'rb') as f:
         pdf_bytes = f.read()
 
     return Response(
