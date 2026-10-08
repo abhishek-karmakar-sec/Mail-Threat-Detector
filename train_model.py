@@ -5,9 +5,9 @@ import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils.class_weight import compute_class_weight
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
-from tensorflow.keras.callbacks import EarlyStopping
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, BatchNormalization
+from keras.callbacks import EarlyStopping
 
 # 1. Advanced Text Preprocessing tailored for Emails
 def clean_email_text(text):
