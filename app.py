@@ -85,6 +85,11 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
+    return render_template('authorize.html')
+
+@app.route('/oauth_callback', methods=['POST'])
+def oauth_callback():
+    session['google_connected'] = True
     return redirect(url_for('index'))
 
 @app.route('/download_report', methods=['POST'])

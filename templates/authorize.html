@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Google Accounts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #121212; color: #e3e3e3; font-family: 'Inter', sans-serif; }
+        .google-box { background: #1e1f22; border: 1px solid #333538; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="google-box w-full max-w-md rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center">
+        <!-- Google Logo Mock -->
+        <div class="mb-6 flex items-center gap-2">
+            <svg class="w-8 h-8" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.15 21.32 7.18 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.18C.43 8.13 0 9.87 0 12s.43 3.87 1.18 5.4l4.09-3.16z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.18 0 3.15 2.68 1.18 6.6l4.09 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/>
+            </svg>
+            <span class="text-xl font-medium text-white">Google</span>
+        </div>
+
+        <h1 class="text-xl font-semibold text-white mb-2">Sign in with Google</h1>
+        <p class="text-sm text-slate-400 mb-6">to continue to <strong class="text-cyan-400">CYBERCOP Threat Intelligence</strong></p>
+
+        <div class="w-full bg-[#2d2f33] p-4 rounded-xl flex items-center gap-3 mb-6 border border-white/5 text-left">
+            <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                A
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-sm font-medium text-white truncate">atik_007@gmail.com</p>
+                <p class="text-xs text-slate-400 truncate">CYBERCOP Enterprise Node</p>
+            </div>
+        </div>
+
+        <div class="text-xs text-slate-400 text-left bg-black/20 p-4 rounded-xl mb-8 border border-white/5 space-y-2">
+            <p class="font-semibold text-slate-300">CYBERCOP requests access to:</p>
+            <p class="flex items-center gap-2">✓ Read, parse, and analyze inbound Gmail messages for threat indicators.</p>
+            <p class="flex items-center gap-2">✓ Access metadata for automated forensic PDF reporting.</p>
+        </div>
+
+        <form action="/oauth_callback" method="POST" class="w-full">
+            <button type="submit" class="w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium py-3 px-6 rounded-full transition-all text-sm shadow-lg">
+                Continue & Grant Permissions
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

@@ -76,6 +76,12 @@
             </div>
 
             <div class="flex items-center gap-5 text-sm font-medium">
+                {% if session.get('google_connected') %}
+                    <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 hidden sm:flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Gmail API Connected
+                    </span>
+                {% endif %}
+
                 <form action="/toggle_monitoring" method="POST" class="m-0 hidden sm:block">
                     <button type="submit" class="px-3.5 py-1.5 rounded-full text-xs font-mono transition-all flex items-center gap-2 {% if monitoring %}border border-red-500/50 bg-red-500/10 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]{% else %}glass-panel text-cyber-muted hover:text-white{% endif %}">
                         <span class="w-2 h-2 rounded-full {% if monitoring %}bg-red-500 animate-pulse{% else %}bg-gray-500{% endif %}"></span>
