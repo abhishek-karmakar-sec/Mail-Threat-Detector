@@ -58,8 +58,9 @@
 
     <!-- FIXED 3D ABSTRACT FLUID BACKGROUND VIDEO -->
     <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <video autoplay muted loop playsinline class="w-full h-full object-cover opacity-85 scale-105">
+        <video autoplay muted loop playsinline preload="auto" class="w-full h-full object-cover opacity-85 scale-105">
             <source src="{{ url_for('static', filename='videos/background-fluid.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
         </video>
         <div class="absolute inset-0 bg-[#030408]/25 backdrop-blur-[0.2px]"></div>
     </div>
