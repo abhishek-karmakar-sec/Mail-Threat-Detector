@@ -24,8 +24,18 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Path to your Google Cloud OAuth credentials file
-CLIENT_SECRETS_FILE = "client_secret.json"
+# Check multiple potential locations for client_secret.json on Render & Local
+POSSIBLE_SECRET_PATHS = [
+    "client_secret.json",
+    "/etc/secrets/client_secret.json"
+]
+
+def get_client_secrets_file():
+    for path in POSSIBLE_SECRET_PATHS:
+        if os.path.exists(path):
+            return path
+    return None
+
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 @app.route('/', methods=['GET', 'POST'])
@@ -98,13 +108,14 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
-    """Initiates the real Google OAuth 2.0 flow with error feedback"""
-    if not os.path.exists(CLIENT_SECRETS_FILE):
-        return f"Error: {CLIENT_SECRETS_FILE} not found in root or Render Secret Files directory! Please configure client_secret.json.", 500
+    """Initiates the real Google OAuth 2.0 flow with multi-path secret checking"""
+    secret_file = get_client_secrets_file()
+    if not secret_file:
+        return "Error: client_secret.json not found in root or Render Secret Files directory! Please configure client_secret.json in Render Environment settings.", 500
         
     try:
         flow = Flow.from_client_secrets_file(
-            CLIENT_SECRETS_FILE, scopes=SCOPES)
+            secret_file, scopes=SCOPES)
         flow.redirect_uri = url_for('oauth2callback', _external=True)
         
         authorization_url, state = flow.authorization_url(
@@ -120,12 +131,13 @@ def authorize():
 def oauth2callback():
     """Handles the OAuth callback from Google and stores user credentials"""
     state = session.get('state')
-    if not state:
+    secret_file = get_client_secrets_file()
+    if not state or not secret_file:
         return redirect(url_for('index'))
 
     try:
         flow = Flow.from_client_secrets_file(
-            CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+            secret_file, scopes=SCOPES, state=state)
         flow.redirect_uri = url_for('oauth2callback', _external=True)
         
         authorization_response = request.url
@@ -162,7 +174,7 @@ def download_report():
     pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], 'cybercop_forensic_report.pdf')
     generate_forensic_pdf(data, pdf_path)
 
-    with open(pdf_path, 'rb') as f:
+    with open(pdf_path, 'rb' ) as f:
         pdf_bytes = f.read()
 
     return Response(
