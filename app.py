@@ -4,18 +4,11 @@ import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, Response
 from werkzeug.utils import secure_filename
 
-# Google OAuth imports
-from google_auth_oauthlib.flow import Flow
-import google.auth.transport.requests
-
 # Import local CYBERCOP modules
 from parser import parse_eml_content
 from report_generator import generate_forensic_pdf
 from sandbox_analyzer import detonate_attachment
 from ai_analyzer import analyze_email_content
-
-# Allow insecure transport for local OAuth development (Render uses HTTPS automatically in production)
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -23,10 +16,6 @@ app.secret_key = os.urandom(24)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Path to your Google Cloud OAuth credentials file
-CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -37,7 +26,6 @@ def index():
     urls = []
     sandbox_data = []
     monitoring = session.get('monitoring', False)
-    google_connected = 'credentials' in session
 
     if request.method == 'POST':
         if 'email_file' in request.files:
@@ -88,8 +76,7 @@ def index():
                            urls=urls,
                            sandbox_data=sandbox_data,
                            raw_json=raw_json_str,
-                           monitoring=monitoring,
-                           google_connected=google_connected)
+                           monitoring=monitoring)
 
 @app.route('/toggle_monitoring', methods=['POST'])
 def toggle_monitoring():
@@ -98,50 +85,11 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
-    """Initiates the real Google OAuth 2.0 flow"""
-    if not os.path.exists(CLIENT_SECRETS_FILE):
-        # Fallback redirect if client_secret.json isn't uploaded yet
-        return redirect(url_for('index'))
-        
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES)
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true')
-    
-    session['state'] = state
-    return redirect(authorization_url)
+    return render_template('authorize.html')
 
-@app.route('/oauth2callback')
-def oauth2callback():
-    """Handles the OAuth callback from Google and stores user credentials"""
-    state = session.get('state')
-    if not state:
-        return redirect(url_for('index'))
-
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    authorization_response = request.url
-    # Ensure proper scheme for Render production HTTPS
-    if request.headers.get('X-Forwarded-Proto') == 'https':
-        authorization_response = authorization_response.replace('http://', 'https://')
-        
-    flow.fetch_token(authorization_response=authorization_response)
-    
-    credentials = flow.credentials
-    session['credentials'] = {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-    
+@app.route('/oauth_callback', methods=['POST'])
+def oauth_callback():
+    session['google_connected'] = True
     return redirect(url_for('index'))
 
 @app.route('/download_report', methods=['POST'])
