@@ -280,4 +280,4 @@ def toggle_monitoring():
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     # NOTE: If Port 5000 is blocked by Windows on your machine, change port=5000 to port=5001 here.
-    app.run(host="0.0.0.0", debug=True, port=8080)
+    app.run(host="0.0.0.0", debug=True, port=5000)
