@@ -98,21 +98,23 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
-    """Initiates the real Google OAuth 2.0 flow"""
+    """Initiates the real Google OAuth 2.0 flow with error feedback"""
     if not os.path.exists(CLIENT_SECRETS_FILE):
-        # Fallback redirect if client_secret.json isn't uploaded yet
-        return redirect(url_for('index'))
+        return f"Error: {CLIENT_SECRETS_FILE} not found in root or Render Secret Files directory! Please configure client_secret.json.", 500
         
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES)
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true')
-    
-    session['state'] = state
-    return redirect(authorization_url)
+    try:
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, scopes=SCOPES)
+        flow.redirect_uri = url_for('oauth2callback', _external=True)
+        
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true')
+        
+        session['state'] = state
+        return redirect(authorization_url)
+    except Exception as e:
+        return f"Google OAuth Initialization Error: {str(e)}", 500
 
 @app.route('/oauth2callback')
 def oauth2callback():
@@ -121,27 +123,29 @@ def oauth2callback():
     if not state:
         return redirect(url_for('index'))
 
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    authorization_response = request.url
-    # Ensure proper scheme for Render production HTTPS
-    if request.headers.get('X-Forwarded-Proto') == 'https':
-        authorization_response = authorization_response.replace('http://', 'https://')
+    try:
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+        flow.redirect_uri = url_for('oauth2callback', _external=True)
         
-    flow.fetch_token(authorization_response=authorization_response)
-    
-    credentials = flow.credentials
-    session['credentials'] = {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-    
+        authorization_response = request.url
+        if request.headers.get('X-Forwarded-Proto') == 'https':
+            authorization_response = authorization_response.replace('http://', 'https://')
+            
+        flow.fetch_token(authorization_response=authorization_response)
+        
+        credentials = flow.credentials
+        session['credentials'] = {
+            'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes
+        }
+    except Exception as e:
+        print(f"OAuth Callback Error: {e}")
+        
     return redirect(url_for('index'))
 
 @app.route('/download_report', methods=['POST'])
