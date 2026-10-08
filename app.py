@@ -113,10 +113,10 @@ def toggle_monitoring():
 
 @app.route('/authorize')
 def authorize():
-    """Initiates the real Google OAuth 2.0 flow using credentials.json"""
+    """Initiates the real Google OAuth 2.0 flow cleanly"""
     secret_file = get_client_secrets_file()
     if not secret_file:
-        return "Error: credentials.json not found in root or Render Secret Files directory! Please configure credentials.json in Render Environment settings.", 500
+        return "Error: credentials.json not found in root or Render Secret Files directory! Please configure credentials.json.", 500
         
     try:
         flow = Flow.from_client_secrets_file(
@@ -125,7 +125,8 @@ def authorize():
         
         authorization_url, state = flow.authorization_url(
             access_type='offline',
-            include_granted_scopes='true')
+            include_granted_scopes='true',
+            prompt='consent')
         
         session['state'] = state
         return redirect(authorization_url)
@@ -134,15 +135,14 @@ def authorize():
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    """Handles the OAuth callback from Google and exposes any token exchange errors"""
-    state = session.get('state')
+    """Handles the OAuth callback and fetches the token safely"""
     secret_file = get_client_secrets_file()
-    if not state or not secret_file:
+    if not secret_file:
         return redirect(url_for('index'))
 
     try:
         flow = Flow.from_client_secrets_file(
-            secret_file, scopes=SCOPES, state=state)
+            secret_file, scopes=SCOPES)
         flow.redirect_uri = url_for('oauth2callback', _external=True)
         
         authorization_response = request.url
@@ -161,7 +161,6 @@ def oauth2callback():
             'scopes': credentials.scopes
         }
     except Exception as e:
-        # Exposes the exact token exchange error message instead of looping back silently
         return f"OAuth Token Exchange Error: {str(e)}", 500
         
     return redirect(url_for('index'))
