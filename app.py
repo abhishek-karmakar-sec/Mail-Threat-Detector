@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 from parser import parse_eml_content
 from report_generator import generate_forensic_pdf
 from sandbox_analyzer import detonate_attachment
+from ai_analyzer import analyze_email_content
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -37,9 +38,13 @@ def index():
                 # 1. Parse Email & Run Pipeline
                 parsed_data = parse_eml_content(filepath)
                 
-                # 2. Extract Data Structures
+                # 2. Extract Data Structures & Run AI Neural Network Analysis
+                subject = parsed_data.get('subject', '')
+                body = parsed_data.get('body', '')
+                ai_data = analyze_email_content(subject, body)
+                parsed_data['ai_data'] = ai_data
+
                 risk_data = parsed_data.get('risk_data', {"score": 45, "severity": "MEDIUM", "matched_rules": ["Suspicious keyword found"]})
-                ai_data = parsed_data.get('ai_data', {"percentage": "88.4%", "status": "Phishing Detected"})
                 urls = parsed_data.get('urls', [])
                 
                 # 3. Process Sandbox Detonation for Attachments
