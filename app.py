@@ -3,6 +3,7 @@ import json
 import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, Response
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Google OAuth imports
 from google_auth_oauthlib.flow import Flow
@@ -18,6 +19,8 @@ from ai_analyzer import analyze_email_content
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
+# Fix proxy routing for secure HTTPS redirects on Render
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.urandom(24)
 
 UPLOAD_FOLDER = 'uploads'
