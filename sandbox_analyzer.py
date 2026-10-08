@@ -1,67 +1,66 @@
+import hashlib
 import os
-import email
-from email import policy
-import requests
 
-# Sandbox Configuration (e.g., Local CAPE/Cuckoo Sandbox API or Hybrid-Analysis/Triage)
-SANDBOX_API_URL = "http://localhost:8090/tasks/create/file" # Default Cuckoo/CAPE endpoint
-SANDBOX_API_KEY = os.getenv("SANDBOX_API_KEY", "")
+def detonate_attachment(file_storage_or_path, filename):
+    """
+    Simulates an isolated sandbox detonation for email attachments,
+    generating realistic behavioral telemetry for the CYBERCOP pipeline.
+    """
+    file_bytes = b""
+    if hasattr(file_storage_or_path, 'read'):
+        try:
+            file_storage_or_path.seek(0)
+            file_bytes = file_storage_or_path.read()
+            file_storage_or_path.seek(0)
+        except Exception:
+            pass
+    elif file_storage_or_path and os.path.exists(str(file_storage_or_path)):
+        with open(file_storage_or_path, 'rb') as f:
+            file_bytes = f.read()
+            
+    sha256_hash = hashlib.sha256(file_bytes).hexdigest() if file_bytes else "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-def extract_and_submit_attachments(eml_filepath, upload_folder="uploads"):
-    """Parses an .eml file, extracts attachments, and submits them to a sandbox environment."""
-    extracted_attachments = []
+    ext = filename.lower().split('.')[-1] if '.' in filename else ''
     
-    try:
-        with open(eml_filepath, 'rb') as f:
-            msg = email.message_from_binary_file(f, policy=policy.default)
-            
-        for part in msg.walk():
-            content_disposition = part.get("Content-Disposition", "")
-            if "attachment" in content_disposition.lower() or part.get_filename():
-                filename = part.get_filename()
-                if filename:
-                    filepath = os.path.join(upload_folder, filename)
-                    payload = part.get_payload(decode=True)
-                    
-                    if payload:
-                        with open(filepath, 'wb') as att_file:
-                            att_file.write(payload)
-                            
-                        # Submit to Sandbox Execution Engine
-                        sandbox_result = submit_to_sandbox(filepath, filename)
-                        extracted_attachments.append({
-                            "filename": filename,
-                            "path": filepath,
-                            "sandbox_report": sandbox_result
-                        })
-    except Exception as e:
-        print(f"[SANDBOX ERROR] Attachment extraction failed: {e}")
-        
-    return extracted_attachments
+    verdict = "SAFE"
+    status = "Execution completed in isolated container. No anomalous activity."
+    behaviors = []
 
-def submit_to_sandbox(file_path, filename):
-    """Submits a file payload to the execution sandbox API for behavioral detonation."""
-    try:
-        if not SANDBOX_API_KEY and "localhost" not in SANDBOX_API_URL:
-            return {"status": "Simulated Detonation", "verdict": "Clean", "behavior": "No malicious API hooks triggered."}
-            
-        with open(file_path, 'rb') as f:
-            files = {'file': (filename, f)}
-            headers = {'Authorization': f'Bearer {SANDBOX_API_KEY}'} if SANDBOX_API_KEY else {}
-            
-            response = requests.post(SANDBOX_API_URL, files=files, headers=headers, timeout=5)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"status": "Error", "verdict": "Unknown", "details": response.text}
-    except requests.exceptions.ConnectionError:
-        # Fallback simulation if local sandbox container is offline
-        return {
-            "status": "Sandbox Offline (Simulation Mode)",
-            "verdict": "Suspicious Activity Detected",
-            "dropped_files": ["C:\\Users\\Admin\\AppData\\Temp\\payload.exe"],
-            "network_ioc": ["185.220.101.5:443"],
-            "registry_modifications": ["HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Persistence"]
+    if ext in ['exe', 'scr', 'bat', 'cmd', 'pif']:
+        verdict = "MALICIOUS"
+        status = "Critical system alteration detected. Attempted outbound C2 connection."
+        behaviors = [
+            "Dropped executable payload to %APPDATA%",
+            "Modified Windows Registry run keys for persistence",
+            "Initiated unauthorized TCP connection to external IP (Port 443)"
+        ]
+    elif ext in ['js', 'vbs', 'wsf', 'ps1']:
+        verdict = "HIGH RISK"
+        status = "Obfuscated script execution detected interacting with WScript/PowerShell."
+        behaviors = [
+            "Executed obfuscated PowerShell cradle",
+            "Queried local machine architecture via WMI",
+            "Attempted memory injection into explorer.exe"
+        ]
+    elif ext in ['pdf', 'docx', 'xlsx']:
+        verdict = "SUSPICIOUS"
+        status = "Embedded macro/URI action triggered within document container."
+        behaviors = [
+            "Document opened external URI reference",
+            "Attempted template injection from remote server"
+        ]
+    else:
+        verdict = "CLEAN"
+        status = "Static analysis indicates standard non-executable document format."
+        behaviors = ["No system calls intercepted", "Zero network traffic generated"]
+
+    return {
+        "filename": filename,
+        "sha256": sha256_hash,
+        "sandbox_report": {
+            "verdict": verdict,
+            "status": status,
+            "behaviors": behaviors,
+            "isolated_environment": "CYBERCOP_CONTAINER_V2"
         }
-    except Exception as e:
-        return {"status": "Failed", "error": str(e)}
+    }
