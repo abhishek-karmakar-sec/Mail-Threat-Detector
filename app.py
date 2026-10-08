@@ -131,7 +131,7 @@ def process_email_file(filepath, filename):
         "analysis_timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "processing_node": os.uname().nodename if hasattr(os, 'uname') else "CYBERCOP_NODE_01",
         "dns_resolver": custom_resolver.nameservers[0],
-        "operator_id": "ATIK_007",
+        "operator_id": "ATIK KHAN, ABHISHEK KARMAKAR, KHALIQ UR REHMAN KHAN",
         "mitre_attack_matrix": mitre_mapping
     }
     
